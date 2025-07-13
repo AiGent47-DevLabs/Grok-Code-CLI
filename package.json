@@ -1,0 +1,35 @@
+{
+    "name": "grok-code-cli",
+    "version": "1.0.0",
+    "description": "GROK-CODE CLI Terminal Agent - Interact with Grok 4 for code tasks in your terminal",
+    "main": "index.js",
+    "bin": {
+      "grok": "./index.js"
+    },
+    "scripts": {
+      "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "keywords": ["grok", "xai", "cli", "ai", "code", "terminal"],
+    "author": "Robert DiCrisci <robert@aigent47.com> (AiGent47.com, LLC)",
+    "license": "MIT",
+    "repository": {
+      "type": "git",
+      "url": "https://github.com/AiGent47-DevLabs/Grok-Code-CLI.git"
+    },
+    "bugs": {
+      "url": "https://github.com/AiGent47-DevLabs/Grok-Code-CLI/issues"
+    },
+    "homepage": "https://github.com/AiGent47-DevLabs/Grok-Code-CLI#readme",
+    "engines": {
+      "node": ">=14.0.0"
+    },
+    "dependencies": {
+      "chalk": "^4.1.2",
+      "commander": "^12.1.0",
+      "dotenv": "^16.4.5",
+      "fs-extra": "^11.2.0",
+      "inquirer": "^10.1.8",
+      "openai": "^4.56.0",
+      "uuid": "^10.0.0"
+    }
+  } 

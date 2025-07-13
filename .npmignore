@@ -1,0 +1,53 @@
+# Development files
+.env
+.env.local
+.env.*.local
+*.log
+npm-debug.log*
+
+# Editor directories and files
+.idea
+.vscode
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Test coverage
+coverage/
+.nyc_output/
+
+# Development/test files
+test/
+tests/
+__tests__/
+*.test.js
+*.spec.js
+
+# Documentation source files (but keep DISCLAIMER.md)
+docs/
+
+# Git files
+.git/
+.gitignore
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+.travis.yml
+
+# Examples (if any)
+examples/
+
+# Build artifacts
+dist/
+build/
+
+# Keep these files in the package
+# DISCLAIMER.md
+# LICENSE
+# README.md
+# CHANGELOG.md 

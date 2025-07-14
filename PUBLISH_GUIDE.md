@@ -34,14 +34,14 @@ npm login
 npm publish
 
 # Verify it's live
-npm info grok-code-cli
+npm info @aigent47-devlabs/grok-code-cli
 ```
 
 ## 4. Test Installation
 
 ```bash
 # Test global installation
-npm install -g grok-code-cli
+npm install -g @aigent47-devlabs/grok-code-cli
 
 # Run it
 grok /help
@@ -56,5 +56,5 @@ grok /help
 
 ---
 
-Remember: Your package name on npm is `grok-code-cli` (lowercase)
+Remember: Your package name on npm is `@aigent47-devlabs/grok-code-cli` (scoped)
 Your GitHub repo is `Grok-Code-CLI` (capitalized) 

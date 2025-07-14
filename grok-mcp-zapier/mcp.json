@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "grok-zapier": {
+      "command": "node",
+      "args": ["./src/index.js"],
+      "env": {
+        "PORT": "3000",
+        "WEBHOOK_SECRET": "your-webhook-secret",
+        "ZAPIER_API_KEY": "your-zapier-api-key"
+      }
+    }
+  }
+}

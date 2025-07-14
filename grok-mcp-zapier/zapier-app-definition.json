@@ -1,0 +1,239 @@
+{
+  "name": "GROK CLI",
+  "description": "AI-powered code generation and automation with GROK",
+  "version": "1.0.0",
+  "platformVersion": "13.0.0",
+  "authentication": {
+    "type": "custom",
+    "fields": [
+      {
+        "key": "apiKey",
+        "label": "API Key",
+        "type": "string",
+        "required": true,
+        "helpText": "Your GROK MCP API Key"
+      },
+      {
+        "key": "webhookUrl",
+        "label": "Webhook URL",
+        "type": "string",
+        "required": true,
+        "default": "https://your-server.com",
+        "helpText": "URL where your MCP server is hosted"
+      }
+    ],
+    "test": {
+      "url": "{{bundle.authData.webhookUrl}}/zapier/auth/test",
+      "method": "GET",
+      "headers": {
+        "X-API-Key": "{{bundle.authData.apiKey}}"
+      }
+    }
+  },
+  "triggers": {
+    "code_generated": {
+      "key": "code_generated",
+      "noun": "Code Generation",
+      "display": {
+        "label": "New Code Generated",
+        "description": "Triggers when new code is generated"
+      },
+      "operation": {
+        "inputFields": [
+          {
+            "key": "language",
+            "label": "Programming Language",
+            "type": "string",
+            "choices": [
+              "python",
+              "javascript",
+              "typescript",
+              "java",
+              "go",
+              "rust"
+            ]
+          }
+        ],
+        "perform": {
+          "url": "{{bundle.authData.webhookUrl}}/zapier/triggers/code-generated",
+          "method": "GET",
+          "headers": {
+            "X-API-Key": "{{bundle.authData.apiKey}}"
+          }
+        }
+      }
+    },
+    "project_created": {
+      "key": "project_created",
+      "noun": "Project",
+      "display": {
+        "label": "New Project Created",
+        "description": "Triggers when a new project is initialized"
+      },
+      "operation": {
+        "perform": {
+          "url": "{{bundle.authData.webhookUrl}}/zapier/triggers/project-created",
+          "method": "GET",
+          "headers": {
+            "X-API-Key": "{{bundle.authData.apiKey}}"
+          }
+        }
+      }
+    }
+  },
+  "actions": {
+    "generate_code": {
+      "key": "generate_code",
+      "noun": "Code",
+      "display": {
+        "label": "Generate Code",
+        "description": "Generate code using GROK AI"
+      },
+      "operation": {
+        "inputFields": [
+          {
+            "key": "prompt",
+            "label": "Prompt",
+            "type": "text",
+            "required": true,
+            "helpText": "Describe what code you want to generate"
+          },
+          {
+            "key": "language",
+            "label": "Language",
+            "type": "string",
+            "choices": [
+              "python",
+              "javascript",
+              "typescript",
+              "java",
+              "go",
+              "rust"
+            ],
+            "helpText": "Programming language (optional)"
+          }
+        ],
+        "perform": {
+          "url": "{{bundle.authData.webhookUrl}}/zapier/webhook/generate",
+          "method": "POST",
+          "headers": {
+            "Content-Type": "application/json",
+            "X-API-Key": "{{bundle.authData.apiKey}}"
+          },
+          "body": {
+            "prompt": "{{bundle.inputData.prompt}}",
+            "language": "{{bundle.inputData.language}}",
+            "secret": "{{process.env.WEBHOOK_SECRET}}"
+          }
+        }
+      }
+    },
+    "explain_code": {
+      "key": "explain_code",
+      "noun": "Code Explanation",
+      "display": {
+        "label": "Explain Code",
+        "description": "Get an AI explanation of code"
+      },
+      "operation": {
+        "inputFields": [
+          {
+            "key": "code",
+            "label": "Code",
+            "type": "text",
+            "required": true,
+            "helpText": "The code to explain"
+          }
+        ],
+        "perform": {
+          "url": "{{bundle.authData.webhookUrl}}/zapier/webhook/explain",
+          "method": "POST",
+          "headers": {
+            "Content-Type": "application/json",
+            "X-API-Key": "{{bundle.authData.apiKey}}"
+          },
+          "body": {
+            "code": "{{bundle.inputData.code}}",
+            "secret": "{{process.env.WEBHOOK_SECRET}}"
+          }
+        }
+      }
+    },
+    "run_command": {
+      "key": "run_command",
+      "noun": "Command",
+      "display": {
+        "label": "Run Command",
+        "description": "Execute a command or script"
+      },
+      "operation": {
+        "inputFields": [
+          {
+            "key": "command",
+            "label": "Command",
+            "type": "string",
+            "required": true,
+            "helpText": "Command to execute"
+          }
+        ],
+        "perform": {
+          "url": "{{bundle.authData.webhookUrl}}/zapier/webhook/run",
+          "method": "POST",
+          "headers": {
+            "Content-Type": "application/json",
+            "X-API-Key": "{{bundle.authData.apiKey}}"
+          },
+          "body": {
+            "command": "{{bundle.inputData.command}}",
+            "secret": "{{process.env.WEBHOOK_SECRET}}"
+          }
+        }
+      }
+    },
+    "create_project": {
+      "key": "create_project",
+      "noun": "Project",
+      "display": {
+        "label": "Create Project",
+        "description": "Initialize a new project with AI assistance"
+      },
+      "operation": {
+        "inputFields": [
+          {
+            "key": "project_type",
+            "label": "Project Type",
+            "type": "string",
+            "required": true,
+            "choices": [
+              "python",
+              "node",
+              "react",
+              "vue",
+              "django",
+              "express"
+            ]
+          },
+          {
+            "key": "project_name",
+            "label": "Project Name",
+            "type": "string",
+            "helpText": "Name of the project (optional)"
+          }
+        ],
+        "perform": {
+          "url": "{{bundle.authData.webhookUrl}}/zapier/webhook/init",
+          "method": "POST",
+          "headers": {
+            "Content-Type": "application/json",
+            "X-API-Key": "{{bundle.authData.apiKey}}"
+          },
+          "body": {
+            "project_type": "{{bundle.inputData.project_type}}",
+            "project_name": "{{bundle.inputData.project_name}}",
+            "secret": "{{process.env.WEBHOOK_SECRET}}"
+          }
+        }
+      }
+    }
+  }
+}

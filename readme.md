@@ -2,9 +2,9 @@
 
 A powerful CLI terminal agent for Grok 4, inspired by Claude Code. Enables code generation, editing, running, and more via natural language interactions.
 
-![npm version](https://img.shields.io/npm/v/grok-code-cli)
-![license](https://img.shields.io/npm/l/grok-code-cli)
-![node version](https://img.shields.io/node/v/grok-code-cli)
+![npm version](https://img.shields.io/npm/v/@aigent47-devlabs/grok-code-cli)
+![license](https://img.shields.io/npm/l/@aigent47-devlabs/grok-code-cli)
+![node version](https://img.shields.io/node/v/@aigent47-devlabs/grok-code-cli)
 
 ## Features
 
@@ -51,20 +51,20 @@ Developed by: AiGent47.com
 ## Installation
 
 ```bash
-npm install -g grok-code-cli
+npm install -g @aigent47-devlabs/grok-code-cli
 ```
 
 Or with yarn:
 
 ```bash
-yarn global add grok-code-cli
+yarn global add @aigent47-devlabs/grok-code-cli
 ```
 
 ## Quick Start
 
 1. Install the CLI globally:
    ```bash
-   npm install -g grok-code-cli
+   npm install -g @aigent47-devlabs/grok-code-cli
    ```
 
 2. Configure your API key:
@@ -100,6 +100,12 @@ You can also set your API key via environment variable:
 ```bash
 export XAI_API_KEY="your-api-key-here"
 ```
+
+### API Key Format
+
+Your X.AI API key should look like: `xai-XXXXXXXXXXXXXXXXXXXXXXXX`
+
+Get your API key from: [https://x.ai/api](https://x.ai/api)
 
 ## Commands
 

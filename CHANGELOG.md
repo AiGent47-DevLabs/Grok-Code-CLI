@@ -1,44 +1,49 @@
 # Changelog
 
-All notable changes to this project will be documented in this file.
+All notable changes to GROK-CODE CLI will be documented in this file.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
-
-## [Unreleased]
+## [1.2.0] - 2025-07-14
 
 ### Added
-- Comprehensive legal disclaimer (DISCLAIMER.md)
-- First-run warning system
-- `/disclaimer` command to view full legal text
-- ASCII art splash screen with X.AI branding
-- "Developed by agent47.com" attribution
-- Daytona integration guide for future sandboxing
+- Interactive input box UI with borders (like Claude Code)
+- Context usage percentage indicator while typing
+- System safety prompt to prevent harmful operations
+- User input echo for better transcript clarity
+- Multi-agent project management system
+- Global and local project registries
+- GROK.md template file
+- Sync agent for automatic file updates
+
+### Enhanced
+- Improved error messages with self-correction
+- Better workspace analysis on startup
+- More robust auto-update system
 
 ### Fixed
-- Downgraded chalk from v5 to v4 for CommonJS compatibility
+- Interactive mode now properly triggers when no arguments provided
+- System prompt now always includes safety rules
 
-## [1.0.0] - 2024-12-13
+## [1.1.0] - 2025-07-14
 
 ### Added
-- Initial release of GROK-CODE CLI
-- Natural language code generation using Grok 4
-- Interactive file editing with AI assistance
-- Code execution with `/run` command
-- Session management with save/resume functionality
-- Project initialization with `/init` command
-- Configuration management via `/config`
-- Beautiful colored terminal output
-- File operations with user consent
-- Automatic backup creation before file modifications
-- Support for multiple Grok models (grok-4, grok-3)
-- Environment variable support for API key
-- Comprehensive error handling
-- Large file warnings
+- Auto-update system (checks every 24 hours)
+- Self-correction on API errors (retries up to 2 times)
+- GROK.md context support (global and project-specific)
+- Workspace analysis on startup
+- MCP Zapier connector for automation
 
-### Security
-- All file operations require explicit user confirmation
-- API keys stored securely in user home directory
-- No automatic code execution without user consent
+### Changed
+- Updated package name to @aigent47-devlabs/grok-code-cli
+- Enhanced error handling with retry logic
 
-[1.0.0]: https://github.com/AiGent47-DevLabs/Grok-Code-CLI/releases/tag/v1.0.0 
+## [1.0.0] - 2025-07-13
+
+### Initial Release
+- Basic CLI functionality
+- Natural language code generation
+- File editing with AI assistance
+- Code execution support
+- Session management
+- Multi-model support (grok-4, grok-3)
+- Configuration management
+- Safety features with user consent

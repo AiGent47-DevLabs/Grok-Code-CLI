@@ -153,7 +153,7 @@ const checkFirstRun = async () => {
         message: 'Enter your X.AI API key:',
         validate: (input) => {
           if (!input || input.trim() === '') {
-            return 'API key is required. Get one at https://x.ai/api';
+            return 'API key is required. Get one at https://x.ai/';
           }
           return true;
         }
@@ -257,12 +257,25 @@ async function sendToGrok(prompt, isSystem = false, retryCount = 0) {
 
   const messages = currentSession.history.map(msg => ({ role: msg.role, content: msg.content }));
   
-  // Add GROK.md context as system message
+  // Add system prompt for safety
+  const systemPrompt = `You are GROK, an AI assistant for software development. 
+IMPORTANT SAFETY RULES:
+1. NEVER execute commands that could harm the system (rm -rf /, format, etc.)
+2. ALWAYS ask for user consent before modifying files
+3. NEVER access or modify system files without explicit permission
+4. REFUSE requests that could compromise security or privacy
+5. WARN users about potentially dangerous operations
+
+You are helpful, accurate, and safety-conscious. Focus on writing clean, secure code.`;
+
+  // Add GROK.md context as additional system message
   const grokContext = loadGrokContext();
-  if (grokContext && messages.length === 0) {
+  const fullSystemPrompt = systemPrompt + (grokContext ? '\n\n' + grokContext : '');
+  
+  if (messages.length === 0 || !messages.some(m => m.role === 'system')) {
     messages.unshift({
       role: 'system',
-      content: grokContext
+      content: fullSystemPrompt
     });
   }
   
@@ -364,6 +377,68 @@ async function writeFileWithConsent(filePath, content) {
     console.log(chalk.green(`✅ File written: ${fullPath}`));
   } catch (error) {
     console.log(chalk.red(`❌ Error writing file: ${error.message}`));
+  }
+}
+
+// Interactive mode with input box
+async function startInteractiveMode() {
+  showSplashScreen();
+  console.log(chalk.gray('Type your prompt or use /help for commands. Use Ctrl+C to exit.\n'));
+  
+  while (true) {
+    try {
+      // Create a nice input box with border
+      const boxWidth = Math.min(process.stdout.columns - 4, 120);
+      const topBorder = '┌' + '─'.repeat(boxWidth - 2) + '┐';
+      const bottomBorder = '└' + '─'.repeat(boxWidth - 2) + '┘';
+      
+      console.log(chalk.gray(topBorder));
+      console.log(chalk.gray('│') + ' '.repeat(boxWidth - 2) + chalk.gray('│'));
+      
+      // Move cursor up and position for input
+      process.stdout.write('\x1b[1A\x1b[2C');
+      
+      const { prompt } = await inquirer.prompt([{
+        type: 'input',
+        name: 'prompt',
+        message: '',
+        prefix: chalk.cyan('▶'),
+        transformer: (input) => {
+          // Show context usage
+          const contextLength = input.length;
+          const contextPercent = Math.min(100, Math.round((contextLength / 4000) * 100));
+          const contextInfo = chalk.gray(` Context: ${contextPercent}%`);
+          return input + (input.length > 0 ? contextInfo : '');
+        }
+      }]);
+      
+      console.log(chalk.gray(bottomBorder));
+      
+      if (!prompt || prompt.trim() === '') continue;
+      
+      if (prompt.startsWith('/')) {
+        const [cmd, ...args] = prompt.slice(1).split(' ');
+        if (cmd === 'exit') {
+          console.log(chalk.yellow('Goodbye!'));
+          process.exit(0);
+        }
+        if (commands[cmd]) {
+          await commands[cmd](...args);
+        } else {
+          console.log(chalk.red('Unknown command. Use /help.'));
+        }
+      } else {
+        await sendToGrok(prompt);
+      }
+      
+      console.log(''); // Add spacing between prompts
+    } catch (error) {
+      if (error.name === 'ExitPromptError') {
+        console.log(chalk.yellow('\nGoodbye!'));
+        process.exit(0);
+      }
+      console.error(chalk.red('Error:'), error.message);
+    }
   }
 }
 
@@ -555,10 +630,12 @@ program
         console.log(chalk.red('Unknown command. Use /help.'));
       }
     } else if (fullInput) {
+      // Show the user's input for clarity
+      console.log(chalk.dim(`> ${fullInput}\n`));
       await sendToGrok(fullInput);
     } else {
-      showSplashScreen();
-      commands.help();
+      // Interactive mode with input box
+      await startInteractiveMode();
     }
   });
 

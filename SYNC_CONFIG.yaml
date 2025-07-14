@@ -1,0 +1,112 @@
+# Synchronization Configuration
+# Defines how local files sync to global registries
+
+sync_rules:
+  project_enhancements:
+    source_pattern: "**/PROJECT_ENHANCEMENTS.md"
+    target: "GLOBAL_PROJECT_REGISTRY.md"
+    frequency: "30m"
+    triggers:
+      - "on_file_save"
+      - "on_git_commit"
+    merge_strategy: "append_unique"
+    
+  project_agents:
+    source_pattern: "**/PROJECT_AGENTS.md"
+    target: "GLOBAL_AGENT_REGISTRY.md"
+    frequency: "30m"
+    triggers:
+      - "on_file_save"
+      - "on_agent_status_change"
+    merge_strategy: "update_existing"
+    
+  npm_github_sync:
+    triggers:
+      - "npm_publish"
+    actions:
+      - "git_add_all"
+      - "git_commit"
+      - "git_push"
+      - "git_tag_version"
+    error_handling: "retry_3x_then_alert"
+
+watchers:
+  enhancement_watcher:
+    paths:
+      - "./PROJECT_ENHANCEMENTS.md"
+      - "../*/PROJECT_ENHANCEMENTS.md"
+    on_change: "sync_to_global"
+    
+  agent_watcher:
+    paths:
+      - "./PROJECT_AGENTS.md"
+      - "../*/PROJECT_AGENTS.md"
+    on_change: "sync_to_global"
+    
+  grok_md_watcher:
+    paths:
+      - "./GROK.md"
+      - "~/GROK.md"
+    on_change: "reload_context"
+
+global_files:
+  project_registry:
+    path: "~/GLOBAL_PROJECT_REGISTRY.md"
+    backup: true
+    versions_to_keep: 10
+    
+  agent_registry:
+    path: "~/GLOBAL_AGENT_REGISTRY.md"
+    backup: true
+    versions_to_keep: 10
+    
+  master_persona:
+    path: "~/MASTER_PERSONA.yaml"
+    immutable: true
+    requires_auth: true
+
+automation:
+  auto_pr_on_sync:
+    enabled: true
+    branch_prefix: "auto-sync/"
+    commit_prefix: "chore(sync): "
+    
+  auto_npm_publish:
+    enabled: false  # Requires manual approval
+    on_conditions:
+      - "all_tests_pass"
+      - "version_bumped"
+      - "changelog_updated"
+      
+  auto_documentation:
+    enabled: true
+    on_triggers:
+      - "new_feature_merged"
+      - "api_change_detected"
+
+notifications:
+  sync_failures:
+    channels: ["console", "log_file"]
+    severity: "error"
+    
+  sync_success:
+    channels: ["log_file"]
+    severity: "info"
+    
+  agent_alerts:
+    channels: ["console", "global_registry"]
+    severity: "warning"
+
+performance:
+  max_concurrent_syncs: 3
+  retry_delay: "5s"
+  max_retries: 3
+  batch_size: 10
+  
+conflict_resolution:
+  strategy: "newest_wins"
+  backup_conflicts: true
+  manual_review_required:
+    - "version_conflicts"
+    - "deletion_conflicts"
+    - "priority_conflicts"

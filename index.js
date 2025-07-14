@@ -30,7 +30,7 @@ const showSplashScreen = () => {
    ╚═════╝ ╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═╝       ╚═════╝ ╚═════╝ ╚═════╝ ╚══════╝`));
   
   console.log(chalk.cyan('\n  🤖 GROK-CODE - AI-Powered Development Assistant'));
-  console.log(chalk.gray('  Version 1.0.0 | Powered by X.AI'));
+  console.log(chalk.gray('  Version 1.1.0 | Powered by X.AI'));
   console.log(chalk.magentaBright('  Developed by: AiGent47.com\n'));
   console.log(chalk.yellow('  ⚠️  DISCLAIMER: AI-generated code requires review'));
   console.log(chalk.gray('  Read full disclaimer: grok /disclaimer\n'));
@@ -534,7 +534,7 @@ const commands = {
 program
   .name('grok')
   .description('GROK-CODE CLI')
-  .version('1.0.0')
+  .version('1.1.0')
   .argument('[input...]', 'Prompt or slash command')
   .action(async (input) => {
     // Check for updates first (runs in background)

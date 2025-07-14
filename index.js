@@ -12,6 +12,7 @@ const { v4: uuidv4 } = require('uuid');
 const { execSync } = require('child_process');
 const axios = require('axios');
 const semver = require('semver');
+const EmailIntegration = require('./src/email-integration');
 
 dotenv.config();
 
@@ -215,6 +216,9 @@ const openai = new OpenAI({
   apiKey: config.apiKey || '',
   baseURL: 'https://api.x.ai/v1',
 });
+
+// Initialize Email Integration
+const emailIntegration = new EmailIntegration({ grokDir });
 
 // Session Management
 let currentSession = { id: uuidv4(), history: [], model: config.defaultModel };
@@ -456,6 +460,10 @@ const commands = {
     console.log('/edit <file> - Edit file');
     console.log('/run <file/cmd> - Run code/file');
     console.log('/init - Initialize project');
+    console.log('/canvas <file> - Preview HTML/JS/Python visualizations');
+    console.log('/email - Email integration commands');
+    console.log('/morning-init - Initialize morning workspace');
+    console.log('/pack-it-up - End of day summary');
     console.log('/disclaimer - View legal disclaimer');
     console.log('/exit - Exit CLI');
   },
@@ -601,6 +609,210 @@ const commands = {
   init: async () => {
     const { type } = await inquirer.prompt([{ type: 'input', name: 'type', message: 'Project type (e.g., python):' }]);
     await sendToGrok(`Initialize a ${type} project setup.`);
+  },
+  canvas: async (file) => {
+    if (!file) {
+      console.log(chalk.red('Please specify a file to preview'));
+      console.log(chalk.gray('Usage: grok /canvas <file.html|file.js|file.py>'));
+      return;
+    }
+    
+    const CanvasPreview = require('./src/canvas-preview');
+    const preview = new CanvasPreview();
+    
+    console.log(chalk.yellow('Starting canvas preview...'));
+    await preview.startPreview(file);
+    
+    // Keep process alive
+    process.on('SIGINT', () => {
+      preview.stop();
+      process.exit(0);
+    });
+  },
+  email: async (subcommand, ...args) => {
+    if (!subcommand) {
+      console.log(chalk.blue('Email Integration Commands:'));
+      console.log('/email review - Review pending email requests');
+      console.log('/email process <id> - Process a specific request');
+      console.log('/email template [feature|bug] - Generate email template');
+      console.log('/email webhook - Start webhook server');
+      return;
+    }
+
+    switch (subcommand) {
+      case 'review':
+        await emailIntegration.reviewPendingRequests();
+        break;
+      case 'process':
+        const requestId = args[0];
+        if (!requestId) {
+          console.log(chalk.red('Please specify request ID'));
+          return;
+        }
+        await emailIntegration.processRequest(requestId);
+        break;
+      case 'template':
+        const type = args[0] || 'feature';
+        console.log(chalk.cyan(`\n${type.toUpperCase()} Email Template:\n`));
+        console.log(emailIntegration.generateTemplate(type));
+        break;
+      case 'webhook':
+        await emailIntegration.setupWebhook();
+        break;
+      default:
+        console.log(chalk.red('Unknown email command'));
+    }
+  },
+  'morning-init': async () => {
+    console.log(chalk.cyan('\n☀️  Good morning! Initializing GROK workspace...\n'));
+    
+    // Load CLAUDE.md
+    const claudePath = path.join(process.cwd(), 'CLAUDE.md');
+    if (fs.existsSync(claudePath)) {
+      console.log(chalk.yellow('📄 Loading project context from CLAUDE.md...'));
+      const claudeContent = fs.readFileSync(claudePath, 'utf8');
+      const lines = claudeContent.split('\n').slice(0, 20);
+      console.log(chalk.gray(lines.join('\n') + '\n...'));
+    }
+    
+    // Check daily summaries
+    const summariesDir = path.join(grokDir, 'daily-summaries');
+    if (fs.existsSync(summariesDir)) {
+      const summaries = fs.readdirSync(summariesDir).sort().reverse();
+      if (summaries.length > 0) {
+        console.log(chalk.yellow(`\n📅 Found ${summaries.length} daily summaries`));
+        const latest = summaries[0];
+        console.log(chalk.gray(`Latest: ${latest}`));
+      }
+    }
+    
+    // Check pending email requests
+    const pending = await emailIntegration.reviewPendingRequests();
+    
+    // Check GitHub issues/PRs if token available
+    if (process.env.GITHUB_TOKEN) {
+      console.log(chalk.yellow('\n🐙 Checking GitHub status...'));
+      try {
+        const { execSync } = require('child_process');
+        const issues = execSync('gh issue list --limit 5', { encoding: 'utf8' });
+        if (issues.trim()) {
+          console.log(chalk.gray('Open Issues:'));
+          console.log(issues);
+        }
+        
+        const prs = execSync('gh pr list --limit 5', { encoding: 'utf8' });
+        if (prs.trim()) {
+          console.log(chalk.gray('Open PRs:'));
+          console.log(prs);
+        }
+      } catch (e) {
+        console.log(chalk.gray('GitHub CLI not available or not authenticated'));
+      }
+    }
+    
+    // Load project enhancements
+    const enhancementsPath = path.join(process.cwd(), 'PROJECT_ENHANCEMENTS.md');
+    if (fs.existsSync(enhancementsPath)) {
+      console.log(chalk.yellow('\n📋 Project Enhancements:'));
+      const enhancements = fs.readFileSync(enhancementsPath, 'utf8');
+      const todoMatch = enhancements.match(/## Pending Tasks\n([\s\S]*?)##/);
+      if (todoMatch) {
+        console.log(chalk.gray(todoMatch[1].trim().substring(0, 300) + '...'));
+      }
+    }
+    
+    console.log(chalk.green('\n✅ Workspace initialized! Ready for development.\n'));
+    console.log(chalk.cyan('💡 Tips:'));
+    console.log(chalk.gray('- Use /help to see all commands'));
+    console.log(chalk.gray('- Use /email review to check pending requests'));
+    console.log(chalk.gray('- Use "pack-it-up" at end of day to save progress'));
+  },
+  'pack-it-up': async () => {
+    console.log(chalk.magenta('\n🌙 End of day! Packing up your work...\n'));
+    
+    const today = new Date().toISOString().split('T')[0];
+    const summaryPath = path.join(grokDir, 'daily-summaries', `DAILY_SUMMARY_${today}.md`);
+    
+    // Ensure directory exists
+    fs.ensureDirSync(path.dirname(summaryPath));
+    
+    // Collect today's accomplishments
+    let summary = `# Daily Summary - ${new Date().toLocaleDateString()}\n\n`;
+    summary += `## 🎯 Session Information\n\n`;
+    summary += `- **Session ID**: ${currentSession.id}\n`;
+    summary += `- **Total Interactions**: ${currentSession.history.length}\n`;
+    summary += `- **Model Used**: ${currentSession.model}\n`;
+    summary += `- **Working Directory**: ${process.cwd()}\n\n`;
+    
+    // Add conversation highlights
+    if (currentSession.history.length > 0) {
+      summary += `## 💬 Conversation Highlights\n\n`;
+      const userMessages = currentSession.history.filter(m => m.role === 'user');
+      userMessages.slice(-5).forEach((msg, i) => {
+        summary += `${i + 1}. ${msg.content.substring(0, 100)}${msg.content.length > 100 ? '...' : ''}\n`;
+      });
+      summary += '\n';
+    }
+    
+    // Check for code changes
+    try {
+      const gitStatus = execSync('git status --porcelain', { encoding: 'utf8' });
+      if (gitStatus) {
+        summary += `## 📝 Uncommitted Changes\n\n\`\`\`\n${gitStatus}\`\`\`\n\n`;
+      }
+      
+      const gitLog = execSync('git log --oneline -5', { encoding: 'utf8' });
+      if (gitLog) {
+        summary += `## 📊 Recent Commits\n\n\`\`\`\n${gitLog}\`\`\`\n\n`;
+      }
+    } catch (e) {}
+    
+    // Add pending tasks
+    const pendingRequests = fs.readJsonSync(emailIntegration.pendingRequestsPath);
+    const unprocessed = pendingRequests.filter(r => !r.processed);
+    if (unprocessed.length > 0) {
+      summary += `## 📧 Pending Email Requests\n\n`;
+      unprocessed.forEach(req => {
+        summary += `- **${req.id}**: ${req.parsed.title}\n`;
+      });
+      summary += '\n';
+    }
+    
+    // Tomorrow's priorities (prompt user)
+    const { priorities } = await inquirer.prompt([{
+      type: 'input',
+      name: 'priorities',
+      message: 'What are tomorrow\'s priorities? (comma-separated):',
+      default: 'Continue development'
+    }]);
+    
+    summary += `## 🚀 Tomorrow's Priorities\n\n`;
+    priorities.split(',').forEach((p, i) => {
+      summary += `${i + 1}. ${p.trim()}\n`;
+    });
+    
+    summary += `\n---\n`;
+    summary += `*Generated: ${new Date().toISOString()}*\n`;
+    summary += `*Next Session: Use "morning-init" to restore context*\n`;
+    
+    // Save summary
+    fs.writeFileSync(summaryPath, summary);
+    console.log(chalk.green(`✅ Daily summary saved to: ${summaryPath}`));
+    
+    // Update PROJECT_ENHANCEMENTS.md if it exists
+    const enhancementsPath = path.join(process.cwd(), 'PROJECT_ENHANCEMENTS.md');
+    if (fs.existsSync(enhancementsPath)) {
+      const content = fs.readFileSync(enhancementsPath, 'utf8');
+      const updated = content.replace(
+        /Last Updated: .*/,
+        `Last Updated: ${new Date().toISOString()}`
+      );
+      fs.writeFileSync(enhancementsPath, updated);
+      console.log(chalk.green('✅ Updated PROJECT_ENHANCEMENTS.md'));
+    }
+    
+    console.log(chalk.magenta('\n🌙 All packed up! Have a great evening!'));
+    console.log(chalk.gray('Tomorrow, run "grok morning-init" to restore your context.'));
   },
   exit: () => process.exit(0),
 };

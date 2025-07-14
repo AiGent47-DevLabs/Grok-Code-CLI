@@ -13,11 +13,21 @@ All notable changes to GROK-CODE CLI will be documented in this file.
 - Global and local project registries
 - GROK.md template file
 - Sync agent for automatic file updates
+- Canvas preview system for HTML/JS/Python visualizations (`/canvas` command)
+- Email integration system for feature requests (`/email` commands)
+- Morning initialization command (`/morning-init`)
+- End-of-day summary command (`/pack-it-up`)
+- Daily summary system for context preservation
+- Pending email requests tracking
+- GitHub integration with Octokit
+- Example visualizations (earth-simulation.html, data-viz.js, analysis.py)
 
 ### Enhanced
 - Improved error messages with self-correction
 - Better workspace analysis on startup
 - More robust auto-update system
+- Added express dependency for email webhook server
+- Added @octokit/rest for GitHub API integration
 
 ### Fixed
 - Interactive mode now properly triggers when no arguments provided

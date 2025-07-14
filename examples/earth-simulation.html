@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Earth Simulation - GROK vs Gemini</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Arial', sans-serif;
+            background: radial-gradient(ellipse at center, #1a1a2e 0%, #0a0a0f 100%);
+            overflow: hidden;
+            color: white;
+        }
+        
+        #container {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+        }
+        
+        .simulation {
+            flex: 1;
+            position: relative;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .label {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 24px;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+            z-index: 100;
+        }
+        
+        #grok-earth { border-right: 1px solid rgba(255, 255, 255, 0.2); }
+        #grok-label { color: #9D4EDD; }
+        #gemini-label { color: #4285F4; }
+        
+        .stats {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            font-size: 12px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 10px;
+            border-radius: 5px;
+            font-family: monospace;
+        }
+        
+        .controls {
+            position: absolute;
+            top: 60px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 15px;
+            border-radius: 5px;
+            z-index: 100;
+        }
+        
+        button {
+            background: #9D4EDD;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            margin: 5px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        button:hover {
+            background: #7B2CBF;
+            transform: scale(1.05);
+        }
+        
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <div class="simulation" id="grok-earth">
+            <div class="label" id="grok-label">GROK EARTH</div>
+            <canvas id="grok-canvas"></canvas>
+            <div class="stats" id="grok-stats">
+                FPS: <span id="grok-fps">0</span><br>
+                Particles: <span id="grok-particles">0</span><br>
+                Rotation: <span id="grok-rotation">0</span>°
+            </div>
+        </div>
+        <div class="simulation" id="gemini-earth">
+            <div class="label" id="gemini-label">GEMINI EARTH</div>
+            <canvas id="gemini-canvas"></canvas>
+            <div class="stats" id="gemini-stats">
+                FPS: <span id="gemini-fps">0</span><br>
+                Particles: <span id="gemini-particles">0</span><br>
+                Rotation: <span id="gemini-rotation">0</span>°
+            </div>
+        </div>
+    </div>
+    
+    <div class="controls">
+        <h3>Controls</h3>
+        <button onclick="toggleRotation()">Toggle Rotation</button><br>
+        <button onclick="toggleClouds()">Toggle Clouds</button><br>
+        <button onclick="toggleStars()">Toggle Stars</button><br>
+        <button onclick="resetView()">Reset View</button>
+    </div>
+
+    <script>
+        // Earth Simulation Class
+        class EarthSimulation {
+            constructor(canvasId, statsPrefix, color) {
+                this.canvas = document.getElementById(canvasId);
+                this.ctx = this.canvas.getContext('2d');
+                this.statsPrefix = statsPrefix;
+                this.color = color;
+                
+                this.rotation = 0;
+                this.rotationSpeed = 0.5;
+                this.isRotating = true;
+                this.showClouds = true;
+                this.showStars = true;
+                
+                this.particles = [];
+                this.stars = [];
+                
+                this.fps = 0;
+                this.frameCount = 0;
+                this.lastTime = performance.now();
+                
+                this.init();
+            }
+            
+            init() {
+                this.resize();
+                window.addEventListener('resize', () => this.resize());
+                
+                // Create stars
+                for (let i = 0; i < 200; i++) {
+                    this.stars.push({
+                        x: Math.random() * this.canvas.width,
+                        y: Math.random() * this.canvas.height,
+                        size: Math.random() * 2,
+                        brightness: Math.random()
+                    });
+                }
+                
+                // Create cloud particles
+                for (let i = 0; i < 50; i++) {
+                    this.particles.push({
+                        angle: Math.random() * Math.PI * 2,
+                        height: 80 + Math.random() * 20,
+                        speed: 0.1 + Math.random() * 0.2,
+                        size: 10 + Math.random() * 20,
+                        opacity: 0.3 + Math.random() * 0.3
+                    });
+                }
+                
+                this.animate();
+            }
+            
+            resize() {
+                this.canvas.width = this.canvas.offsetWidth;
+                this.canvas.height = this.canvas.offsetHeight;
+                this.centerX = this.canvas.width / 2;
+                this.centerY = this.canvas.height / 2;
+                this.radius = Math.min(this.canvas.width, this.canvas.height) * 0.3;
+            }
+            
+            animate() {
+                requestAnimationFrame(() => this.animate());
+                
+                // Clear canvas
+                this.ctx.fillStyle = 'rgba(10, 10, 15, 0.1)';
+                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+                
+                // Update FPS
+                this.frameCount++;
+                const currentTime = performance.now();
+                if (currentTime - this.lastTime > 1000) {
+                    this.fps = Math.round(this.frameCount * 1000 / (currentTime - this.lastTime));
+                    this.frameCount = 0;
+                    this.lastTime = currentTime;
+                    document.getElementById(`${this.statsPrefix}-fps`).textContent = this.fps;
+                }
+                
+                // Draw stars
+                if (this.showStars) {
+                    this.drawStars();
+                }
+                
+                // Draw Earth
+                this.drawEarth();
+                
+                // Draw clouds
+                if (this.showClouds) {
+                    this.drawClouds();
+                }
+                
+                // Update rotation
+                if (this.isRotating) {
+                    this.rotation += this.rotationSpeed;
+                    if (this.rotation > 360) this.rotation = 0;
+                }
+                
+                // Update stats
+                document.getElementById(`${this.statsPrefix}-particles`).textContent = 
+                    this.showClouds ? this.particles.length : 0;
+                document.getElementById(`${this.statsPrefix}-rotation`).textContent = 
+                    Math.round(this.rotation);
+            }
+            
+            drawStars() {
+                this.ctx.fillStyle = 'white';
+                this.stars.forEach(star => {
+                    this.ctx.globalAlpha = star.brightness * 0.8;
+                    this.ctx.beginPath();
+                    this.ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+                    this.ctx.fill();
+                });
+                this.ctx.globalAlpha = 1;
+            }
+            
+            drawEarth() {
+                // Earth shadow
+                this.ctx.beginPath();
+                this.ctx.arc(this.centerX + 5, this.centerY + 5, this.radius, 0, Math.PI * 2);
+                this.ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+                this.ctx.fill();
+                
+                // Earth sphere
+                const gradient = this.ctx.createRadialGradient(
+                    this.centerX - this.radius/3, 
+                    this.centerY - this.radius/3, 
+                    0,
+                    this.centerX, 
+                    this.centerY, 
+                    this.radius
+                );
+                
+                gradient.addColorStop(0, this.color === 'grok' ? '#6B46C1' : '#4285F4');
+                gradient.addColorStop(0.5, this.color === 'grok' ? '#9D4EDD' : '#34A853');
+                gradient.addColorStop(1, '#1a1a2e');
+                
+                this.ctx.beginPath();
+                this.ctx.arc(this.centerX, this.centerY, this.radius, 0, Math.PI * 2);
+                this.ctx.fillStyle = gradient;
+                this.ctx.fill();
+                
+                // Continents (simplified)
+                this.drawContinents();
+                
+                // Atmosphere glow
+                const glowGradient = this.ctx.createRadialGradient(
+                    this.centerX, this.centerY, this.radius,
+                    this.centerX, this.centerY, this.radius * 1.2
+                );
+                glowGradient.addColorStop(0, 'rgba(100, 150, 255, 0.3)');
+                glowGradient.addColorStop(1, 'rgba(100, 150, 255, 0)');
+                
+                this.ctx.beginPath();
+                this.ctx.arc(this.centerX, this.centerY, this.radius * 1.2, 0, Math.PI * 2);
+                this.ctx.fillStyle = glowGradient;
+                this.ctx.fill();
+            }
+            
+            drawContinents() {
+                this.ctx.save();
+                this.ctx.translate(this.centerX, this.centerY);
+                this.ctx.rotate(this.rotation * Math.PI / 180);
+                
+                // Simple continent shapes
+                this.ctx.fillStyle = this.color === 'grok' ? '#2D1B69' : '#0F9D58';
+                
+                // Africa-like shape
+                this.ctx.beginPath();
+                this.ctx.ellipse(0, 0, this.radius * 0.3, this.radius * 0.4, 0, 0, Math.PI * 2);
+                this.ctx.fill();
+                
+                // Americas-like shape
+                this.ctx.beginPath();
+                this.ctx.ellipse(-this.radius * 0.5, -this.radius * 0.2, 
+                    this.radius * 0.2, this.radius * 0.5, -0.3, 0, Math.PI * 2);
+                this.ctx.fill();
+                
+                // Asia-like shape
+                this.ctx.beginPath();
+                this.ctx.ellipse(this.radius * 0.4, -this.radius * 0.3, 
+                    this.radius * 0.4, this.radius * 0.3, 0.2, 0, Math.PI * 2);
+                this.ctx.fill();
+                
+                this.ctx.restore();
+            }
+            
+            drawClouds() {
+                this.particles.forEach(cloud => {
+                    cloud.angle += cloud.speed * 0.01;
+                    
+                    const x = this.centerX + Math.cos(cloud.angle + this.rotation * 0.01) * cloud.height;
+                    const y = this.centerY + Math.sin(cloud.angle + this.rotation * 0.01) * cloud.height * 0.5;
+                    
+                    this.ctx.beginPath();
+                    this.ctx.arc(x, y, cloud.size, 0, Math.PI * 2);
+                    this.ctx.fillStyle = `rgba(255, 255, 255, ${cloud.opacity})`;
+                    this.ctx.fill();
+                });
+            }
+            
+            toggleRotation() {
+                this.isRotating = !this.isRotating;
+            }
+            
+            toggleClouds() {
+                this.showClouds = !this.showClouds;
+            }
+            
+            toggleStars() {
+                this.showStars = !this.showStars;
+            }
+            
+            reset() {
+                this.rotation = 0;
+                this.isRotating = true;
+                this.showClouds = true;
+                this.showStars = true;
+            }
+        }
+        
+        // Initialize simulations
+        const grokEarth = new EarthSimulation('grok-canvas', 'grok', 'grok');
+        const geminiEarth = new EarthSimulation('gemini-canvas', 'gemini', 'gemini');
+        
+        // Control functions
+        function toggleRotation() {
+            grokEarth.toggleRotation();
+            geminiEarth.toggleRotation();
+        }
+        
+        function toggleClouds() {
+            grokEarth.toggleClouds();
+            geminiEarth.toggleClouds();
+        }
+        
+        function toggleStars() {
+            grokEarth.toggleStars();
+            geminiEarth.toggleStars();
+        }
+        
+        function resetView() {
+            grokEarth.reset();
+            geminiEarth.reset();
+        }
+    </script>
+</body>
+</html>

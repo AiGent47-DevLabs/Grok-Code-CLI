@@ -1,0 +1,213 @@
+name: Agent Automation Workflow
+
+on:
+  issues:
+    types: [opened, labeled]
+  pull_request:
+    types: [opened, synchronize, closed]
+  push:
+    branches: [main]
+    tags: ['v*']
+  release:
+    types: [published]
+  workflow_dispatch:
+
+jobs:
+  # Issue Triage
+  issue-triage:
+    if: github.event_name == 'issues'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Analyze Issue
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const issue = context.issue;
+            const labels = context.payload.issue.labels.map(l => l.name);
+            
+            // Route to appropriate agent based on labels
+            if (labels.includes('enhancement')) {
+              // Feature Request Agent
+              await github.rest.issues.addAssignees({
+                ...issue,
+                assignees: ['feature-agent']
+              });
+              
+              await github.rest.issues.createComment({
+                ...issue,
+                body: '🤖 Feature Request Agent activated! Analyzing requirements...'
+              });
+            } else if (labels.includes('bug')) {
+              // Bug Hunter Agent
+              await github.rest.issues.createComment({
+                ...issue,
+                body: '🐛 Bug Hunter Agent activated! Creating test case...'
+              });
+            }
+
+  # PR Review
+  pr-review:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          
+      - name: Install Dependencies
+        run: npm ci
+        
+      - name: Run Tests
+        run: npm test
+        continue-on-error: true
+        
+      - name: Code Review Agent
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const pr = context.issue;
+            
+            // Analyze code changes
+            const files = await github.rest.pulls.listFiles({
+              ...pr,
+              pull_number: context.payload.pull_request.number
+            });
+            
+            let review = {
+              docChanges: false,
+              testChanges: false,
+              srcChanges: false
+            };
+            
+            files.data.forEach(file => {
+              if (file.filename.includes('docs/')) review.docChanges = true;
+              if (file.filename.includes('test/')) review.testChanges = true;
+              if (file.filename.includes('src/')) review.srcChanges = true;
+            });
+            
+            // Post review
+            let body = '## 🤖 Automated Code Review\n\n';
+            
+            if (review.srcChanges && !review.testChanges) {
+              body += '⚠️ **Warning**: Source changes detected without test updates\n';
+            }
+            
+            if (review.srcChanges && !review.docChanges) {
+              body += '📝 **Note**: Consider updating documentation\n';
+            }
+            
+            body += '\n### Files Changed\n';
+            body += `- Source: ${review.srcChanges ? '✅' : '❌'}\n`;
+            body += `- Tests: ${review.testChanges ? '✅' : '❌'}\n`;
+            body += `- Docs: ${review.docChanges ? '✅' : '❌'}\n`;
+            
+            await github.rest.issues.createComment({
+              ...pr,
+              body
+            });
+
+  # Release Management
+  release-publish:
+    if: github.event_name == 'release'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          registry-url: 'https://registry.npmjs.org'
+          
+      - name: Install Dependencies
+        run: npm ci
+        
+      - name: Publish to NPM
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          
+      - name: Update Documentation
+        run: |
+          echo "📦 Version ${{ github.event.release.tag_name }} published!" >> RELEASES.md
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git add RELEASES.md
+          git commit -m "docs: Update release log for ${{ github.event.release.tag_name }}"
+          git push
+
+  # Dependency Updates
+  dependency-check:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Check Dependencies
+        uses: actions/github-script@v6
+        with:
+          script: |
+            // Dependency Update Agent
+            const { execSync } = require('child_process');
+            
+            try {
+              const outdated = execSync('npm outdated --json', { encoding: 'utf8' });
+              const deps = JSON.parse(outdated);
+              
+              if (Object.keys(deps).length > 0) {
+                // Create issue for updates
+                await github.rest.issues.create({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  title: '📦 Dependency Updates Available',
+                  body: `The following dependencies have updates:\n\n${
+                    Object.entries(deps).map(([name, info]) => 
+                      `- **${name}**: ${info.current} → ${info.latest}`
+                    ).join('\n')
+                  }`,
+                  labels: ['dependencies', 'maintenance']
+                });
+              }
+            } catch (e) {
+              console.log('All dependencies up to date!');
+            }
+
+  # Security Scan
+  security-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Run Security Audit
+        run: npm audit --json > audit.json
+        continue-on-error: true
+        
+      - name: Process Security Results
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const fs = require('fs');
+            const audit = JSON.parse(fs.readFileSync('audit.json', 'utf8'));
+            
+            if (audit.vulnerabilities) {
+              const high = audit.metadata.vulnerabilities.high || 0;
+              const critical = audit.metadata.vulnerabilities.critical || 0;
+              
+              if (high > 0 || critical > 0) {
+                // Create security issue
+                await github.rest.issues.create({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  title: '🚨 Security Vulnerabilities Detected',
+                  body: `Security scan found:\n- Critical: ${critical}\n- High: ${high}`,
+                  labels: ['security', 'urgent']
+                });
+              }
+            }

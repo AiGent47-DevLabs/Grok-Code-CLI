@@ -8,6 +8,7 @@ A powerful CLI terminal agent for Grok 4, inspired by Claude Code. Enables code 
 
 ## Features
 
+### Core Features
 - 🤖 Natural language code generation and editing
 - 📝 Interactive file editing with AI assistance
 - 🔧 Execute code and commands directly
@@ -15,6 +16,17 @@ A powerful CLI terminal agent for Grok 4, inspired by Claude Code. Enables code 
 - 🎨 Beautiful colored terminal output
 - 🔒 Safe file operations with user consent
 - 🚀 Project initialization assistance
+- 🔄 Auto-update system (checks every 24 hours)
+- 🔁 Self-correction on API errors
+- 📋 GROK.md context support (global and project-specific)
+
+### New in v1.2.0
+- 🎨 **Canvas Preview** - Visualize HTML, JavaScript, and Python files in browser
+- 📧 **Email Integration** - Convert email requests into GitHub issues
+- ☀️ **Morning Init** - Start your day with context from previous sessions
+- 🌙 **Pack It Up** - End-of-day summaries with next day priorities
+- 🤖 **Multi-Agent System** - Automated GitHub workflow management
+- 📦 **Interactive UI** - Beautiful input box like Claude Code
 
 ## Important Disclaimer
 
@@ -38,7 +50,7 @@ The CLI features a beautiful ASCII art splash screen in X.AI's signature magenta
  ╚═════╝ ╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═╝       ╚═════╝ ╚═════╝ ╚═════╝ ╚══════╝
 
 🤖 GROK-CODE - AI-Powered Development Assistant
-Version 1.0.0 | Powered by X.AI
+Version 1.2.0 | Powered by X.AI
 Developed by: AiGent47.com
 ```
 
@@ -133,6 +145,10 @@ grok /help
 | `/edit <file>` | AI-assisted file editing | `grok /edit index.js` |
 | `/run <cmd/file>` | Execute command or file | `grok /run "npm test"` |
 | `/init` | Initialize a new project | `grok /init` |
+| `/canvas <file>` | Preview HTML/JS/Python visualizations | `grok /canvas demo.html` |
+| `/email` | Email integration commands | `grok /email review` |
+| `/morning-init` | Initialize morning workspace | `grok /morning-init` |
+| `/pack-it-up` | End of day summary | `grok /pack-it-up` |
 | `/disclaimer` | View legal disclaimer | `grok /disclaimer` |
 | `/exit` | Exit the CLI | `grok /exit` |
 
@@ -185,6 +201,47 @@ grok /history
 
 # Resume previous session
 grok /resume <session-id>
+```
+
+### Canvas Preview (New!)
+
+```bash
+# Preview HTML visualization
+grok /canvas examples/earth-simulation.html
+
+# Preview JavaScript charts
+grok /canvas examples/data-viz.js
+
+# Preview Python plots
+grok /canvas examples/analysis.py
+```
+
+### Email Integration (New!)
+
+```bash
+# Review pending email requests
+grok /email review
+
+# Process a specific request
+grok /email process <request-id>
+
+# Generate email template
+grok /email template feature
+
+# Start webhook server
+grok /email webhook
+```
+
+### Daily Workflow (New!)
+
+```bash
+# Start your day
+grok /morning-init
+
+# Work throughout the day...
+
+# End your day
+grok /pack-it-up
 ```
 
 ## Session Storage
@@ -279,7 +336,22 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Changelog
 
-### v1.0.0 (2024-12-13)
+### v1.2.0 (2025-07-14)
+- Added Canvas preview system for visualizations
+- Email integration for feature requests
+- Morning-init and pack-it-up commands
+- Interactive UI with input box
+- Multi-agent GitHub automation
+- Daily summary system
+
+### v1.1.0 (2025-07-14)
+- Auto-update functionality
+- Self-correction error handling
+- GROK.md context support
+- Workspace analysis
+- MCP Zapier connector
+
+### v1.0.0 (2025-07-13)
 - Initial release
 - Basic code generation and editing
 - Session management
@@ -310,4 +382,4 @@ See [TODO.md](TODO.md) for the complete roadmap.
 ---
 
 Made with ❤️ by Robert DiCrisci  
-© 2024 AiGent47.com, LLC
+© 2025 AiGent47.com, LLC
